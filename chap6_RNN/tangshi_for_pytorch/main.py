@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 import torch.optim as optim
 
-import rnn
+import rnn as rnn_lstm
 
 start_token = 'G'
 end_token = 'E'
@@ -192,42 +192,44 @@ def pretty_print_poem(poem):  # 令打印的结果更工整
 
 
 def gen_poem(begin_word):
-    # poems_vector, word_int_map, vocabularies = process_poems2('./tangshi.txt')  #  use the other dataset to train the network
+    # 加载模型和词汇表
     poems_vector, word_int_map, vocabularies = process_poems1('./poems.txt')
     word_embedding = rnn_lstm.word_embedding(vocab_length=len(word_int_map) + 1, embedding_dim=100)
     rnn_model = rnn_lstm.RNN_model(batch_sz=64, vocab_len=len(word_int_map) + 1, word_embedding=word_embedding,
                                    embedding_dim=100, lstm_hidden_dim=128)
-
     rnn_model.load_state_dict(torch.load('./poem_generator_rnn'))
 
-    # 指定开始的字
-
+    # 初始化诗句
     poem = begin_word
     word = begin_word
+
     while word != end_token:
-        input = np.array([word_int_map[w] for w in poem],dtype= np.int64)
+        input = np.array([word_int_map[w] for w in poem], dtype=np.int64)
         input = Variable(torch.from_numpy(input))
         output = rnn_model(input, is_test=True)
         word = to_word(output.data.tolist()[-1], vocabularies)
+
+        # 强制以 begin_word 开头
+        if len(poem) == 1:
+            word = begin_word
+
         poem += word
-        # print(word)
-        # print(poem)
         if len(poem) > 30:
             break
     return poem
 
 
 
-run_training()  # 如果不是训练阶段 ，请注销这一行 。 网络训练时间很长。
+#run_training()  # 如果不是训练阶段 ，请注销这一行 。 网络训练时间很长。
 
 
-pretty_print_poem(gen_poem("日"))
-pretty_print_poem(gen_poem("红"))
-pretty_print_poem(gen_poem("山"))
-pretty_print_poem(gen_poem("夜"))
-pretty_print_poem(gen_poem("湖"))
-pretty_print_poem(gen_poem("湖"))
-pretty_print_poem(gen_poem("湖"))
+# pretty_print_poem(gen_poem("日"))
+# pretty_print_poem(gen_poem("红"))
+# pretty_print_poem(gen_poem("山"))
+# pretty_print_poem(gen_poem("夜"))
+# pretty_print_poem(gen_poem("湖"))
+# pretty_print_poem(gen_poem("湖"))
+# pretty_print_poem(gen_poem("湖"))
 pretty_print_poem(gen_poem("君"))
 
 
